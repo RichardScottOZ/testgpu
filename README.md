@@ -11,7 +11,9 @@ This repository contains an integration of the GPU_INSCY algorithm for Ubuntu sy
 
 ## Quick Start
 
-See [SETUP.md](SETUP.md) for detailed installation and usage instructions.
+For a fast setup guide, see [QUICKSTART.md](QUICKSTART.md).
+
+For detailed installation and usage instructions, see [SETUP.md](SETUP.md).
 
 ### Basic Installation
 
@@ -36,7 +38,9 @@ python run_example.py
 
 ## Documentation
 
+- [Quick Start Guide](QUICKSTART.md) - Fast reference for getting started
 - [Setup Guide](SETUP.md) - Comprehensive setup instructions for Ubuntu
+- [Installation Status](INSTALLATION_STATUS.md) - Integration details and status
 - [GPU_INSCY README](GPU_INSCY/README.md) - Original project documentation
 
 ## About GPU_INSCY
