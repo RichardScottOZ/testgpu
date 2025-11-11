@@ -8,6 +8,7 @@ This repository contains an integration of the GPU_INSCY algorithm for Ubuntu sy
   - GPU-accelerated density-based subspace clustering algorithm
   - Supports INSCY, GPU-INSCY, GPU-INSCY*, and GPU-INSCY-memory variants
   - Includes example datasets and test scripts
+  - **NEW**: Geospatial raster clustering script for multi-band imagery
 
 ## Quick Start
 
@@ -42,6 +43,7 @@ python run_example.py
 - [Setup Guide](SETUP.md) - Comprehensive setup instructions for Ubuntu
 - [Installation Status](INSTALLATION_STATUS.md) - Integration details and status
 - [GPU_INSCY README](GPU_INSCY/README.md) - Original project documentation
+- [Raster Clustering Guide](GPU_INSCY/RASTER_CLUSTERING.md) - Geospatial raster clustering with GPU_INSCY
 
 ## About GPU_INSCY
 
