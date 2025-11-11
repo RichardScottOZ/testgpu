@@ -282,7 +282,19 @@ def main():
     
     print(f"[Normalize] Data range before: [{X.min().item():.4f}, {X.max().item():.4f}]")
     print(f"[Normalize] Data range after: [{X_normalized.min().item():.4f}, {X_normalized.max().item():.4f}]")
+    
+    # Check for NaN or Inf values
+    if torch.isnan(X_normalized).any():
+        print(f"[ERROR] Normalized data contains NaN values!")
+        raise ValueError("Normalized data contains NaN values")
+    if torch.isinf(X_normalized).any():
+        print(f"[ERROR] Normalized data contains Inf values!")
+        raise ValueError("Normalized data contains Inf values")
+    
     X = X_normalized
+    
+    # Ensure all GPU operations are complete before calling GPU_INSCY
+    torch.cuda.synchronize()
 
     # Import GPU_INSCY variant
     inscy_map = import_inscy(Path(args.inscy_dir))
@@ -300,12 +312,21 @@ def main():
         min_size = max(1, int(valid_count * 0.05))
         print(f"[Warning] min_size exceeds data size, adjusted to {min_size}")
 
+    # Ensure tensor is float32 (required by GPU_INSCY)
+    if X.dtype != torch.float32:
+        X = X.float()
+        print(f"[Warning] Converted tensor to float32")
+    
     print(f"[GPU_INSCY] {args.variant}: neighborhood_size={args.neighborhood_size}, F={args.F}, "
           f"num_obj={args.num_obj}, min_size={min_size}, r={args.r}, "
           f"number_of_cells={args.number_of_cells}, rectangular={args.rectangular}")
-    print(f"[GPU_INSCY] Input tensor: shape={X.shape}, dtype={X.dtype}, device={X.device}")
-    print(f"[GPU_INSCY] Input data stats: min={X.min().item():.6f}, max={X.max().item():.6f}, mean={X.mean().item():.6f}")
+    print(f"[GPU_INSCY] Input tensor: shape={X.shape}, dtype={X.dtype}, device={X.device}, contiguous={X.is_contiguous()}")
+    print(f"[GPU_INSCY] Input data stats: min={X.min().item():.6f}, max={X.max().item():.6f}, mean={X.mean().item():.6f}, std={X.std().item():.6f}")
+    print(f"[GPU_INSCY] Memory allocated: {torch.cuda.memory_allocated() / 1024**2:.2f} MB")
     print(f"[GPU_INSCY] Calling {args.variant}...")
+    print(f"[GPU_INSCY] Parameters: X.shape={X.shape}, neighborhood_size={args.neighborhood_size}, F={args.F}, num_obj={args.num_obj}, min_size={min_size}, r={args.r}, number_of_cells={args.number_of_cells}, rectangular={args.rectangular}")
+    import sys
+    sys.stdout.flush()  # Force flush before potential crash
 
     # ---- run GPU_INSCY ----
     try:
