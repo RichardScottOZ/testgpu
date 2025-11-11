@@ -39,6 +39,8 @@ X = load_synt_gauss(n=n, d=d, cl=cl, std=std, cl_d=dims_pr_cl, re=0)
 # X = load_synt(n=n, d=d, cl=cl, cl_d=dims_pr_cl, re=0)
 n = X.shape[0]
 
+print(X.shape, N_size, F, num_obj, min_size, r, c)
+
 
 
 t0 = time.time()
