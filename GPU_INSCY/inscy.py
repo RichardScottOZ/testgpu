@@ -18,7 +18,10 @@ inscy = load(name="GPU_INSCY_1",
                       "src/algorithms/GPU_Clustering.cu",
                       "src/algorithms/INSCY.cpp",
                       "src/algorithms/GPU_INSCY.cu"
-                      ])
+                      ],    
+                      extra_cflags=["-DNVTX_DISABLE_DEPRECATED_API=1"],
+                    extra_cuda_cflags=["-DNVTX_DISABLE_DEPRECATED_API=1"]
+)
 print("Finished compilation, took: %.4fs" % (time.time() - t0))
 
 
