@@ -4,7 +4,9 @@ Implementation of GPU-INSCY from the article "GPU-INSCY: A GPU-Parallel Algorith
 ## Requirements
 The original implementation was tested on a workstation with Ubuntu 20.4 LTS and CUDA 10.1.
 
-**Windows 11 Support**: This version has been refactored to work on Windows 11. See [README_WINDOWS.md](README_WINDOWS.md) for Windows-specific installation instructions and known limitations.
+**Windows 11 Support**: This version has been refactored to work on Windows 11. 
+- **Quick Start**: See [QUICKSTART_WINDOWS.md](QUICKSTART_WINDOWS.md) for step-by-step installation
+- **Details**: See [README_WINDOWS.md](README_WINDOWS.md) for complete Windows documentation and troubleshooting
 
 The important packages used are: torch=1.6.0, numpy=1.19.2, matplotlib=3.3.2, pandas=1.1.3, and ninja=1.10.0. However, it should work for newer versions.
 
