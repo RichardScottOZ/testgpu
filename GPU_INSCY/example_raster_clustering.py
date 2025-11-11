@@ -19,6 +19,9 @@ def create_synthetic_rasters(output_dir: Path, H=256, W=256, n_bands=6):
     Generates n_bands GeoTIFF files with synthetic spatial patterns:
     - Bands 0-2: Gradient patterns (simulate RGB)
     - Bands 3-5: Clustered patterns (simulate NIR/SWIR)
+    
+    Note: All pixels have valid data (values 1-10000) with nodata=0 to ensure
+    no invalid pixels that could cause clustering algorithm issues.
     """
     print(f"Creating synthetic rasters in {output_dir}")
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -53,7 +56,8 @@ def create_synthetic_rasters(output_dir: Path, H=256, W=256, n_bands=6):
         data = (data - data.min()) / (data.max() - data.min())
         
         # Convert to uint16 for realistic GeoTIFF
-        data_uint = (data * 10000).astype(np.uint16)
+        # Scale to 1-10000 range to avoid 0 values (which is nodata)
+        data_uint = (data * 9999 + 1).astype(np.uint16)
         
         # Write GeoTIFF
         filepath = output_dir / f"band_{band_idx:02d}.tif"
@@ -65,7 +69,7 @@ def create_synthetic_rasters(output_dir: Path, H=256, W=256, n_bands=6):
             'dtype': 'uint16',
             'crs': 'EPSG:4326',
             'transform': transform,
-            'nodata': 0
+            'nodata': 0  # No pixel should have value 0 now
         }
         
         with rio.open(filepath, 'w', **meta) as dst:
