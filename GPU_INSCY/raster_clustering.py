@@ -272,6 +272,17 @@ def main():
         X = X.contiguous()
     
     print(f"[GPU] Moved data to CUDA device: {X.shape}")
+    
+    # Normalize to [0,1] range per band (like GPU_INSCY examples)
+    # This is CRITICAL - GPU_INSCY expects normalized data
+    print(f"[Normalize] Normalizing data to [0,1] range per band...")
+    min_x = X.min(0, keepdim=True)[0]
+    max_x = X.max(0, keepdim=True)[0]
+    X_normalized = (X - min_x) / (max_x - min_x + 1e-10)  # Add epsilon to avoid division by zero
+    
+    print(f"[Normalize] Data range before: [{X.min().item():.4f}, {X.max().item():.4f}]")
+    print(f"[Normalize] Data range after: [{X_normalized.min().item():.4f}, {X_normalized.max().item():.4f}]")
+    X = X_normalized
 
     # Import GPU_INSCY variant
     inscy_map = import_inscy(Path(args.inscy_dir))
@@ -292,13 +303,21 @@ def main():
     print(f"[GPU_INSCY] {args.variant}: neighborhood_size={args.neighborhood_size}, F={args.F}, "
           f"num_obj={args.num_obj}, min_size={min_size}, r={args.r}, "
           f"number_of_cells={args.number_of_cells}, rectangular={args.rectangular}")
+    print(f"[GPU_INSCY] Input tensor: shape={X.shape}, dtype={X.dtype}, device={X.device}")
+    print(f"[GPU_INSCY] Input data stats: min={X.min().item():.6f}, max={X.max().item():.6f}, mean={X.mean().item():.6f}")
+    print(f"[GPU_INSCY] Calling {args.variant}...")
 
     # ---- run GPU_INSCY ----
     try:
         result = inscy_fn(X, args.neighborhood_size, args.F, args.num_obj, min_size, args.r,
                          args.number_of_cells, args.rectangular)
+        print(f"[GPU_INSCY] Completed successfully!")
     except Exception as e:
-        print(f"[Error] GPU_INSCY failed: {e}")
+        print(f"[Error] GPU_INSCY failed with exception: {e}")
+        print(f"[Error] Exception type: {type(e).__name__}")
+        import traceback
+        print(f"[Error] Traceback:")
+        traceback.print_exc()
         print(f"[Error] This may be due to incompatible parameters or insufficient GPU memory.")
         print(f"[Error] Try adjusting: neighborhood_size (smaller), min_size (larger), or use fewer pixels.")
         raise

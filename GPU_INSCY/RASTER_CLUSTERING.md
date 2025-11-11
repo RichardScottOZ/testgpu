@@ -132,6 +132,8 @@ python raster_clustering.py \
 ### Data Processing
 
 - `--standardize`: Apply z-score normalization per band (recommended flag)
+  - **Important**: Data is automatically normalized to [0,1] range per band after loading (required by GPU_INSCY)
+  - The standardize flag applies z-score normalization first, then min-max normalization to [0,1]
 - `--tile_rows`: Rows per tile for reading (default: 512)
 - `--compress`: GeoTIFF compression (default: LZW)
   - Options: LZW, ZSTD, DEFLATE, NONE
