@@ -258,25 +258,50 @@ def main():
     X_valid_cpu = X_cpu[valid_mask]
     print(f"[Features] Filtered to valid pixels: shape={X_valid_cpu.shape}")
 
+    # Ensure data is contiguous in memory
+    if not X_valid_cpu.flags['C_CONTIGUOUS']:
+        X_valid_cpu = np.ascontiguousarray(X_valid_cpu)
+        print("[Features] Made array contiguous")
+
     # Torch tensor on GPU
     X_torch = torch.from_numpy(X_valid_cpu).pin_memory()
     X = X_torch.to(device="cuda", dtype=torch.float32, non_blocking=True)
+    
+    # Ensure CUDA tensor is contiguous
+    if not X.is_contiguous():
+        X = X.contiguous()
+    
     print(f"[GPU] Moved data to CUDA device: {X.shape}")
 
     # Import GPU_INSCY variant
     inscy_map = import_inscy(Path(args.inscy_dir))
     inscy_fn = inscy_map[args.variant]
 
-    # Parameter defaults
+    # Parameter defaults and validation
     min_size = args.min_size if args.min_size is not None else int(valid_count * 0.05)
+    
+    # Ensure minimum viable parameters
+    if min_size < 1:
+        min_size = 1
+        print(f"[Warning] Adjusted min_size to 1 (minimum value)")
+    
+    if min_size > valid_count:
+        min_size = max(1, int(valid_count * 0.05))
+        print(f"[Warning] min_size exceeds data size, adjusted to {min_size}")
 
     print(f"[GPU_INSCY] {args.variant}: neighborhood_size={args.neighborhood_size}, F={args.F}, "
           f"num_obj={args.num_obj}, min_size={min_size}, r={args.r}, "
           f"number_of_cells={args.number_of_cells}, rectangular={args.rectangular}")
 
     # ---- run GPU_INSCY ----
-    result = inscy_fn(X, args.neighborhood_size, args.F, args.num_obj, min_size, args.r,
-                     args.number_of_cells, args.rectangular)
+    try:
+        result = inscy_fn(X, args.neighborhood_size, args.F, args.num_obj, min_size, args.r,
+                         args.number_of_cells, args.rectangular)
+    except Exception as e:
+        print(f"[Error] GPU_INSCY failed: {e}")
+        print(f"[Error] This may be due to incompatible parameters or insufficient GPU memory.")
+        print(f"[Error] Try adjusting: neighborhood_size (smaller), min_size (larger), or use fewer pixels.")
+        raise
 
     # GPU_INSCY returns [subspaces, clusterings]
     # subspaces: list of dimension lists (e.g., [[0,1,2], [3,4,5]])

@@ -94,7 +94,7 @@ def run_example():
     output_dir = temp_dir / "output"
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    paths = create_synthetic_rasters(raster_dir, H=128, W=128, n_bands=6)
+    paths = create_synthetic_rasters(raster_dir, H=256, W=256, n_bands=6)
     
     # Build command
     output_tif = output_dir / "clusters.tif"
@@ -107,10 +107,10 @@ def run_example():
         "--artifacts_dir", str(artifacts_dir),
         "--inscy_dir", str(script_dir),
         "--variant", "GPU_INSCY_memory",
-        "--neighborhood_size", "0.05",
+        "--neighborhood_size", "0.01",
         "--F", "1.0",
         "--num_obj", "8",
-        "--min_size", "50",
+        "--min_size", "500",
         "--standardize",
         "--output_subspace_idx", "0"
     ]

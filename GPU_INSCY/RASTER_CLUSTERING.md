@@ -96,6 +96,8 @@ python raster_clustering.py \
   - Similar to epsilon in DBSCAN
   - Smaller values = stricter clustering
   - Should be adjusted based on standardized data scale
+  - **Important**: Use smaller values (0.001-0.01) for small datasets, larger values (0.01-0.05) for large datasets
+  - Too large values may cause algorithm failure
 
 - `--F`: Dimension selection threshold (default: 1.0)
   - Controls how dimensions are selected for subspaces
@@ -107,6 +109,8 @@ python raster_clustering.py \
 - `--min_size`: Minimum cluster size in pixels (default: 5% of N)
   - Absolute count, not percentage
   - Clusters smaller than this are discarded
+  - **Important**: Should be significantly smaller than total data size
+  - Recommended: 0.5% - 10% of valid pixels for best results
 
 - `--r`: R parameter (default: 1.0)
   - Radius parameter for clustering
@@ -361,6 +365,16 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_HOME/lib64
 - Increase min_size
 - Decrease neighborhood_size (stricter)
 - Adjust F parameter
+
+### Segmentation fault / Program crash
+
+**Solution**: Parameter mismatch or data size issues
+- **Reduce neighborhood_size**: Try values like 0.001, 0.005, 0.01 first
+- **Increase min_size**: Should be at least 0.5-1% of valid pixels
+- **Increase data size**: Very small datasets (<10k pixels) may be unstable
+- **Check dataset size**: Ensure you have sufficient valid pixels (>10,000 recommended)
+- **Try different variant**: GPU_INSCY_memory is most stable
+- **Ensure data is standardized**: Use `--standardize` flag
 
 ## References
 
