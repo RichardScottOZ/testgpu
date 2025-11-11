@@ -14,13 +14,15 @@ GPU_INSCY is a GPU-accelerated implementation of the INSCY algorithm for density
 - GCC/G++ compiler
 - Python 3.7 or newer
 
-### CUDA Support (Optional)
-If you want to use GPU acceleration:
+### CUDA Support (Required)
+**IMPORTANT:** This implementation requires CUDA to compile and run. All algorithms (including the CPU-based INSCY) are compiled with CUDA.
+
+Requirements:
 - NVIDIA GPU with CUDA Compute Capability 3.5 or higher
-- CUDA Toolkit 10.1 or newer
+- CUDA Toolkit 10.1 or newer (tested with 10.1, should work with newer versions)
 - cuDNN (recommended)
 
-Note: The code can compile and run without CUDA, but GPU-accelerated functions will not be available.
+**Without CUDA installed, the code will not compile.**
 
 ## Installation
 
@@ -32,13 +34,59 @@ sudo apt-get update
 
 # Install build essentials
 sudo apt-get install -y build-essential
-
-# Optional: Install CUDA (if not already installed)
-# Follow NVIDIA's official CUDA installation guide for your Ubuntu version
-# https://developer.nvidia.com/cuda-downloads
 ```
 
-### 2. Install Python Dependencies
+### 2. Install CUDA Toolkit
+
+**CUDA is required for this project.** Follow these steps to install CUDA on Ubuntu:
+
+#### Option A: Install via apt (Ubuntu 20.04/22.04/24.04)
+
+```bash
+# Add NVIDIA package repository (for Ubuntu 20.04/22.04)
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
+sudo mv cuda-ubuntu2004.pin /etc/apt/preferences.d/cuda-repository-pin-600
+wget https://developer.download.nvidia.com/compute/cuda/12.0.0/local_installers/cuda-repo-ubuntu2004-12-0-local_12.0.0-525.60.13-1_amd64.deb
+sudo dpkg -i cuda-repo-ubuntu2004-12-0-local_12.0.0-525.60.13-1_amd64.deb
+sudo cp /var/cuda-repo-ubuntu2004-12-0-local/cuda-*-keyring.gpg /usr/share/keyrings/
+sudo apt-get update
+sudo apt-get -y install cuda
+
+# Set CUDA_HOME environment variable
+echo 'export CUDA_HOME=/usr/local/cuda' >> ~/.bashrc
+echo 'export PATH=$PATH:$CUDA_HOME/bin' >> ~/.bashrc
+echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_HOME/lib64' >> ~/.bashrc
+source ~/.bashrc
+```
+
+#### Option B: Follow official NVIDIA guide
+
+Visit the official NVIDIA CUDA downloads page for your specific Ubuntu version:
+https://developer.nvidia.com/cuda-downloads
+
+Select:
+- Operating System: Linux
+- Architecture: x86_64
+- Distribution: Ubuntu
+- Version: Your Ubuntu version
+- Installer Type: deb (local) recommended
+
+Follow the installation instructions provided.
+
+#### Verify CUDA Installation
+
+```bash
+# Check CUDA compiler
+nvcc --version
+
+# Check CUDA_HOME is set
+echo $CUDA_HOME
+
+# Verify GPU is detected
+nvidia-smi
+```
+
+### 3. Install Python Dependencies
 
 Navigate to the GPU_INSCY directory and install required packages:
 
@@ -55,13 +103,28 @@ The required packages are:
 - matplotlib
 - scikit-learn
 
-### 3. Verify Installation
+### 4. Verify Installation
 
-Run the test script to verify the installation:
+First, run the verification script to check dependencies:
 
 ```bash
-python test.py
+cd GPU_INSCY
+python verify_installation.py
 ```
+
+This will check:
+- All Python packages are installed
+- CUDA availability
+- Data files are present
+- Source files are present
+
+Then test compilation:
+
+```bash
+python test_compilation.py
+```
+
+This will compile the C++/CUDA code (takes 1-2 minutes on first run) and verify it works.
 
 ## Running Examples
 
@@ -94,13 +157,25 @@ The implementation includes three real-world datasets:
 
 If you encounter compilation errors:
 
-1. **Missing CUDA**: If you don't have an NVIDIA GPU or CUDA installed, the GPU functions will not work. Ensure PyTorch is installed with appropriate CUDA support or CPU-only version.
+1. **Missing CUDA**: The most common error is `CUDA_HOME environment variable is not set`. This means CUDA is not installed or not properly configured.
+   
+   Solutions:
+   - Install CUDA Toolkit (see installation instructions above)
+   - Set CUDA_HOME environment variable:
+     ```bash
+     export CUDA_HOME=/usr/local/cuda
+     export PATH=$PATH:$CUDA_HOME/bin
+     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_HOME/lib64
+     ```
+   - Add these to ~/.bashrc to make permanent
 
-2. **GCC Version**: Ensure GCC/G++ is installed:
+2. **GCC Version**: Ensure GCC/G++ is installed and compatible with your CUDA version:
    ```bash
    gcc --version
    g++ --version
    ```
+   
+   Note: CUDA has specific GCC version requirements. Check CUDA compatibility matrix.
 
 3. **PyTorch CUDA Version**: Check PyTorch CUDA compatibility:
    ```python
@@ -108,6 +183,8 @@ If you encounter compilation errors:
    print(torch.cuda.is_available())
    print(torch.version.cuda)
    ```
+
+4. **Cannot run without CUDA**: This implementation requires CUDA to compile. There is no CPU-only mode available because all source files include CUDA code.
 
 ### Runtime Issues
 
