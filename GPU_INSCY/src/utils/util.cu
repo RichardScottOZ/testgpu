@@ -1,3 +1,7 @@
+// Put these at the very top of the file(s) that use NVTX
+#define NVTX_DISABLE_DEPRECATED_API 1   // prevent legacy aliasing
+#include <nvtx3/nvToolsExt.h>          // NVTX v3 C API
+
 #include "util.cuh"
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,7 +10,7 @@
 
 #include <ATen/ATen.h>
 #include <torch/extension.h>
-#include "nvToolsExt.h"
+//#include "nvToolsExt.h"
 #include "TmpMalloc.cuh"
 
 #define SECTION_SIZE 64
