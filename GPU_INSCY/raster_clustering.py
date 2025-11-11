@@ -59,7 +59,7 @@ def get_args():
     p.add_argument("--number_of_cells", type=int, default=4, 
                    help="Number of cells for spatial indexing")
     p.add_argument("--rectangular", action="store_true", 
-                   help="Use rectangular neighborhoods")
+                   help="Use rectangular neighborhoods (recommended - all examples use this)")
 
     # Subspace selection for output
     p.add_argument("--output_subspace_idx", type=int, default=0,

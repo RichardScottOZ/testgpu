@@ -115,6 +115,7 @@ def run_example():
         "--F", "1.0",
         "--num_obj", "8",
         "--min_size", "500",
+        "--rectangular",  # Critical: all working examples use rectangular=True
         "--standardize",
         "--output_subspace_idx", "0"
     ]

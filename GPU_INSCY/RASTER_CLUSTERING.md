@@ -49,6 +49,7 @@ python raster_clustering.py \
   --neighborhood_size 0.01 \
   --F 1.0 \
   --num_obj 8 \
+  --rectangular \
   --standardize
 ```
 
@@ -120,7 +121,9 @@ python raster_clustering.py \
   - Higher values = more memory, potentially faster
 
 - `--rectangular`: Use rectangular neighborhoods (flag)
-  - vs spherical neighborhoods
+  - **Recommended**: All working GPU_INSCY examples use this flag
+  - vs spherical neighborhoods (default, but less stable)
+  - Significantly improves algorithm stability
 
 ### Output Control
 
@@ -294,6 +297,7 @@ python raster_clustering.py \
   --neighborhood_size 0.015 \
   --num_obj 10 \
   --min_size 500 \
+  --rectangular \
   --standardize \
   --artifacts_dir /output/artifacts
 ```
@@ -329,6 +333,7 @@ python raster_clustering.py \
   --neighborhood_size 0.02 \
   --num_obj 12 \
   --min_size 2000 \
+  --rectangular \
   --standardize \
   --compress ZSTD
 ```
