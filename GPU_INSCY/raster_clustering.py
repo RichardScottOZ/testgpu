@@ -267,7 +267,8 @@ def main():
 
     # Torch tensor on GPU
     X_torch = torch.from_numpy(X_valid_cpu).pin_memory()
-    X = X_torch.to(device="cuda", dtype=torch.float32, non_blocking=True)
+    #X = X_torch.to(device="cuda", dtype=torch.float32, non_blocking=True)
+    X = X_torch
     
     # Ensure CUDA tensor is contiguous
     if not X.is_contiguous():
