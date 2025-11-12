@@ -13,8 +13,10 @@ The `raster_clustering.py` script adapts GPU_INSCY for geospatial raster data, e
 | Method | Projected clustering (medoids) | Density-based subspace clustering |
 | Output | Single clustering | Multiple clusterings (one per subspace) |
 | Parameters | k, l (fixed dimensions) | neighborhood_size, min_size (density-based) |
-| GPU Support | Stays on GPU | Stays on GPU |
+| GPU Support | Stays on GPU | CPU tensors → GPU (managed internally) |
 | Subspaces | Fixed l dimensions per cluster | Automatically discovered per cluster |
+
+**Important**: GPU_INSCY expects **CPU tensors** and handles GPU transfer internally. Do not pre-move tensors to CUDA!
 
 ## Installation
 

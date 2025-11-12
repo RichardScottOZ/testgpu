@@ -265,16 +265,14 @@ def main():
         X_valid_cpu = np.ascontiguousarray(X_valid_cpu)
         print("[Features] Made array contiguous")
 
-    # Torch tensor on GPU
-    X_torch = torch.from_numpy(X_valid_cpu).pin_memory()
-    #X = X_torch.to(device="cuda", dtype=torch.float32, non_blocking=True)
-    X = X_torch
+    # Convert to torch tensor (keep on CPU - GPU_INSCY handles device placement internally)
+    X = torch.from_numpy(X_valid_cpu).float()
     
-    # Ensure CUDA tensor is contiguous
+    # Ensure tensor is contiguous
     if not X.is_contiguous():
         X = X.contiguous()
     
-    print(f"[GPU] Moved data to CUDA device: {X.shape}")
+    print(f"[Torch] Created tensor: {X.shape} (device={X.device})")
     
     # Normalize to [0,1] range per band (like GPU_INSCY examples)
     # This is CRITICAL - GPU_INSCY expects normalized data
@@ -296,9 +294,6 @@ def main():
     
     X = X_normalized
     
-    # Ensure all GPU operations are complete before calling GPU_INSCY
-    torch.cuda.synchronize()
-
     # Import GPU_INSCY variant
     inscy_map = import_inscy(Path(args.inscy_dir))
     inscy_fn = inscy_map[args.variant]
@@ -354,8 +349,7 @@ def main():
           f"number_of_cells={args.number_of_cells}, rectangular={args.rectangular}")
     print(f"[GPU_INSCY] Input tensor: shape={X.shape}, dtype={X.dtype}, device={X.device}, contiguous={X.is_contiguous()}")
     print(f"[GPU_INSCY] Input data stats: min={X.min().item():.6f}, max={X.max().item():.6f}, mean={X.mean().item():.6f}, std={X.std().item():.6f}")
-    print(f"[GPU_INSCY] Memory allocated: {torch.cuda.memory_allocated() / 1024**2:.2f} MB")
-    print(f"[GPU_INSCY] Calling {args.variant}...")
+    print(f"[GPU_INSCY] Calling {args.variant}... (GPU_INSCY handles device placement internally)")
     print(f"[GPU_INSCY] Parameters: X.shape={X.shape}, neighborhood_size={args.neighborhood_size}, F={args.F}, num_obj={args.num_obj}, min_size={min_size}, r={args.r}, number_of_cells={args.number_of_cells}, rectangular={args.rectangular}")
     import sys
     sys.stdout.flush()  # Force flush before potential crash
