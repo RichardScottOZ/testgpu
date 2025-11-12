@@ -30,6 +30,8 @@ import rasterio as rio
 from rasterio.windows import Window
 import torch
 
+from inscy import *
+
 
 # ---------- CLI ----------
 def get_args():
@@ -300,6 +302,8 @@ def main():
     inscy_map = import_inscy(Path(args.inscy_dir))
     inscy_fn = inscy_map[args.variant]
 
+    print(inscy_fn)
+
     # Parameter defaults and validation
     min_size = args.min_size if args.min_size is not None else int(valid_count * 0.05)
     
@@ -329,9 +333,59 @@ def main():
     sys.stdout.flush()  # Force flush before potential crash
 
     # ---- run GPU_INSCY ----
+    print("CHECKING INPUTS")
+    print(X.mean(), args.neighborhood_size, args.F, args.num_obj, min_size, args.r,  args.number_of_cells, args.rectangular)
+    print("TYPES SHOULD BE:","<class 'torch.Tensor'> <class 'float'> <class 'float'> <class 'int'> <class 'int'> <class 'float'> <class 'int'>")
+    print("TYPES GO IN ARE:", type(X), type(args.neighborhood_size), type(args.F), type(args.num_obj), type(min_size), type(args.r),  type(args.number_of_cells), type(args.rectangular))
+
+    #if 1 == 2:
+    if 1 == 1:
+        print("TES")
+        n = 8000#64000 #512000
+        d = 15
+        c = 4
+        num_obj = 1
+        F = .1
+        r = 1.
+        cl = max(1, n//4000)
+        min_size = 500
+        std = .5
+        dims_pr_cl = 3
+
+        N_size = 0.0005
+
+        #ns =  [8*1000, 16*1000, 32*1000, 64*1000, 128*1000, 256*1000, 512*1000, 1024*1000]
+        #N_sizes = [(((150)*cl/n)**(1/dims_pr_cl))*(std**(1/2))/200. for n in ns]
+        #print(N_sizes)
+        #n = ns[test]
+        #N_size = N_sizes[test]
+
+        XT = load_synt_gauss(n=n, d=d, cl=cl, std=std, cl_d=dims_pr_cl, re=0)
+        # X = load_synt(n=n, d=d, cl=cl, cl_d=dims_pr_cl, re=0)
+        n = XT.shape[0]
+
+        if 1 == 2:
+            t0 = time.time()
+            rs = GPU_INSCY_memory(XT, N_size, F, num_obj, min_size, r, number_of_cells=c, rectangular=True)
+            print("GPU_INSCY_memory, took: %.4fs" % (time.time() - t0))
+
+        print("X STATS:", X.min(), X.max(), X.mean(), X.std(), X.dtype, X.shape)
+        print("XT STATs:", XT.min(), XT.max(), XT.mean(), XT.std(), XT.dtype, XT.shape)
+
+        print(XT.shape, N_size, F, num_obj, min_size, r, c)
+        print(type(XT), type(N_size), type(F), type(num_obj), type(min_size), type(r), type(c))
+
+        #quit(3)
+        print(XT.shape, XT)
+        #print(X.shape, X)
+
     try:
+        print(X.dtype)
+        X = X[0:8000,0:15]
+        print(X.shape, X.dtype)
+        
         result = inscy_fn(X, args.neighborhood_size, args.F, args.num_obj, min_size, args.r,
-                         args.number_of_cells, args.rectangular)
+                         number_of_cells=args.number_of_cells, rectangular=args.rectangular)
         print(f"[GPU_INSCY] Completed successfully!")
     except Exception as e:
         print(f"[Error] GPU_INSCY failed with exception: {e}")
