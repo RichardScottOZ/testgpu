@@ -36,24 +36,33 @@ def create_synthetic_rasters(output_dir: Path, H=256, W=256, n_bands=6):
     
     paths = []
     
+    # Create Gaussian clusters in 2D space (like load_synt_gauss in test.py)
+    num_clusters = 4
+    cluster_centers = [(0.25, 0.25), (0.75, 0.25), (0.25, 0.75), (0.75, 0.75)]
+    cluster_std = 0.12  # Similar to std=0.5 in test.py normalized
+    
+    # Assign each pixel to closest cluster
+    cluster_assignments = np.zeros((H, W), dtype=int)
+    for i in range(H):
+        for j in range(W):
+            x_coord, y_coord = X[i, j], Y[i, j]
+            dists = [np.sqrt((x_coord - cx)**2 + (y_coord - cy)**2) for cx, cy in cluster_centers]
+            cluster_assignments[i, j] = np.argmin(dists)
+    
     for band_idx in range(n_bands):
-        # Create different patterns for different bands
-        if band_idx < 3:
-            # Gradient patterns
-            data = (X * 0.5 + Y * 0.5 + np.sin(X * 4 * np.pi) * 0.1 +
-                   band_idx * 0.3)
-        else:
-            # Clustered patterns - create 3-4 distinct regions
-            angle = band_idx * np.pi / 3
-            cx, cy = 0.5 + 0.2 * np.cos(angle), 0.5 + 0.2 * np.sin(angle)
-            dist = np.sqrt((X - cx)**2 + (Y - cy)**2)
-            data = np.exp(-dist * 10) * (1 + 0.3 * np.random.randn(H, W))
+        # Create Gaussian cluster data for this band (like load_synt_gauss)
+        # Each cluster has different mean values per band
+        data = np.zeros((H, W), dtype=np.float32)
         
-        # Add some noise
-        data = data + 0.05 * np.random.randn(H, W)
+        for cluster_id in range(num_clusters):
+            mask = cluster_assignments == cluster_id
+            # Each cluster-band combination has its own Gaussian-distributed mean
+            cluster_mean = 0.25 + (cluster_id * 0.18) + (band_idx * 0.03)
+            # Add Gaussian noise (like test.py std parameter)
+            data[mask] = cluster_mean + cluster_std * np.random.randn(mask.sum())
         
-        # Normalize to 0-1 range
-        data = (data - data.min()) / (data.max() - data.min())
+        # Clip to valid range [0, 1]
+        data = np.clip(data, 0, 1)
         
         # Convert to uint16 for realistic GeoTIFF
         # Scale to 1-10000 range to avoid 0 values (which is nodata)
