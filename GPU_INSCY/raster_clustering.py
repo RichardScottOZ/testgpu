@@ -260,17 +260,21 @@ def main():
     X_valid_cpu = X_cpu[valid_mask]
     print(f"[Features] Filtered to valid pixels: shape={X_valid_cpu.shape}")
 
-    # Ensure data is contiguous in memory
-    if not X_valid_cpu.flags['C_CONTIGUOUS']:
-        X_valid_cpu = np.ascontiguousarray(X_valid_cpu)
-        print("[Features] Made array contiguous")
-
     # Convert to torch tensor (keep on CPU - GPU_INSCY handles device placement internally)
-    X = torch.from_numpy(X_valid_cpu).float()
-    
-    # Ensure tensor is contiguous
-    if not X.is_contiguous():
-        X = X.contiguous()
+    #X = torch.from_numpy(X_valid_cpu).float()
+    X = torch.from_numpy(X_valid_cpu)    
+
+    if 1 == 2:
+        # Ensure data is contiguous in memory
+        if not X_valid_cpu.flags['C_CONTIGUOUS']:
+            X_valid_cpu = np.ascontiguousarray(X_valid_cpu)
+            print("[Features] Made array contiguous")
+
+        
+        
+        # Ensure tensor is contiguous
+        if not X.is_contiguous():
+            X = X.contiguous()
     
     print(f"[Torch] Created tensor: {X.shape} (device={X.device})")
     
