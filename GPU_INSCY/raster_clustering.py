@@ -260,43 +260,30 @@ def main():
     X_valid_cpu = X_cpu[valid_mask]
     print(f"[Features] Filtered to valid pixels: shape={X_valid_cpu.shape}")
 
-    # Convert to torch tensor (keep on CPU - GPU_INSCY handles device placement internally)
-    #X = torch.from_numpy(X_valid_cpu).float()
-    X = torch.from_numpy(X_valid_cpu)    
-
-    if 1 == 2:
-        # Ensure data is contiguous in memory
-        if not X_valid_cpu.flags['C_CONTIGUOUS']:
-            X_valid_cpu = np.ascontiguousarray(X_valid_cpu)
-            print("[Features] Made array contiguous")
-
-        
-        
-        # Ensure tensor is contiguous
-        if not X.is_contiguous():
-            X = X.contiguous()
+    # Convert to torch tensor and ensure float32 (keep on CPU - GPU_INSCY handles device placement internally)
+    # This must match exactly how test.py creates tensors
+    X = torch.from_numpy(X_valid_cpu).float()
     
-    print(f"[Torch] Created tensor: {X.shape} (device={X.device})")
+    print(f"[Torch] Created tensor: {X.shape}, dtype={X.dtype} (device={X.device})")
     
-    # Normalize to [0,1] range per band (like GPU_INSCY examples)
-    # This is CRITICAL - GPU_INSCY expects normalized data
+    # Normalize to [0,1] range per band (exactly like GPU_INSCY examples)
+    # This MUST match inscy.py's normalize() function exactly - no epsilon!
     print(f"[Normalize] Normalizing data to [0,1] range per band...")
+    print(f"[Normalize] Data range before: [{X.min().item():.4f}, {X.max().item():.4f}]")
+    
     min_x = X.min(0, keepdim=True)[0]
     max_x = X.max(0, keepdim=True)[0]
-    X_normalized = (X - min_x) / (max_x - min_x + 1e-10)  # Add epsilon to avoid division by zero
+    X = (X - min_x) / (max_x - min_x)  # Match inscy.py normalize() exactly - no epsilon
     
-    print(f"[Normalize] Data range before: [{X.min().item():.4f}, {X.max().item():.4f}]")
-    print(f"[Normalize] Data range after: [{X_normalized.min().item():.4f}, {X_normalized.max().item():.4f}]")
+    print(f"[Normalize] Data range after: [{X.min().item():.4f}, {X.max().item():.4f}]")
     
-    # Check for NaN or Inf values
-    if torch.isnan(X_normalized).any():
+    # Check for NaN or Inf values (should not happen with proper data)
+    if torch.isnan(X).any():
         print(f"[ERROR] Normalized data contains NaN values!")
-        raise ValueError("Normalized data contains NaN values")
-    if torch.isinf(X_normalized).any():
+        raise ValueError("Normalized data contains NaN values - check for constant-value bands")
+    if torch.isinf(X).any():
         print(f"[ERROR] Normalized data contains Inf values!")
         raise ValueError("Normalized data contains Inf values")
-    
-    X = X_normalized
     
     # Import GPU_INSCY variant
     inscy_map = import_inscy(Path(args.inscy_dir))
@@ -316,75 +303,19 @@ def main():
         min_size = max(1, int(valid_count * 0.05))
         print(f"[Warning] min_size exceeds data size, adjusted to {min_size}")
 
-    # Ensure tensor is float32 (required by GPU_INSCY)
-    if X.dtype != torch.float32:
-        X = X.float()
-        print(f"[Warning] Converted tensor to float32")
-    
-    
-    
+    # Final validation before calling GPU_INSCY
     print(f"[GPU_INSCY] {args.variant}: neighborhood_size={args.neighborhood_size}, F={args.F}, "
           f"num_obj={args.num_obj}, min_size={min_size}, r={args.r}, "
           f"number_of_cells={args.number_of_cells}, rectangular={args.rectangular}")
-    print(f"[GPU_INSCY] Input tensor: shape={X.shape}, dtype={X.dtype}, device={X.device}, contiguous={X.is_contiguous()}")
-    print(f"[GPU_INSCY] Input data stats: min={X.min().item():.6f}, max={X.max().item():.6f}, mean={X.mean().item():.6f}, std={X.std().item():.6f}")
-    print(f"[GPU_INSCY] Calling {args.variant}... (GPU_INSCY handles device placement internally)")
-    print(f"[GPU_INSCY] Parameters: X.shape={X.shape}, neighborhood_size={args.neighborhood_size}, F={args.F}, num_obj={args.num_obj}, min_size={min_size}, r={args.r}, number_of_cells={args.number_of_cells}, rectangular={args.rectangular}")
+    print(f"[GPU_INSCY] Input tensor: shape={X.shape}, dtype={X.dtype}, device={X.device}")
+    print(f"[GPU_INSCY] Input data stats: min={X.min().item():.6f}, max={X.max().item():.6f}, "
+          f"mean={X.mean().item():.6f}, std={X.std().item():.6f}")
+    
     import sys
     sys.stdout.flush()  # Force flush before potential crash
 
     # ---- run GPU_INSCY ----
-    print("CHECKING INPUTS")
-    print(X.mean(), args.neighborhood_size, args.F, args.num_obj, min_size, args.r,  args.number_of_cells, args.rectangular)
-    print("TYPES SHOULD BE:","<class 'torch.Tensor'> <class 'float'> <class 'float'> <class 'int'> <class 'int'> <class 'float'> <class 'int'>")
-    print("TYPES GO IN ARE:", type(X), type(args.neighborhood_size), type(args.F), type(args.num_obj), type(min_size), type(args.r),  type(args.number_of_cells), type(args.rectangular))
-
-    #if 1 == 2:
-    if 1 == 1:
-        print("TES")
-        n = 8000#64000 #512000
-        d = 15
-        c = 4
-        num_obj = 1
-        F = .1
-        r = 1.
-        cl = max(1, n//4000)
-        min_size = 500
-        std = .5
-        dims_pr_cl = 3
-
-        N_size = 0.0005
-
-        #ns =  [8*1000, 16*1000, 32*1000, 64*1000, 128*1000, 256*1000, 512*1000, 1024*1000]
-        #N_sizes = [(((150)*cl/n)**(1/dims_pr_cl))*(std**(1/2))/200. for n in ns]
-        #print(N_sizes)
-        #n = ns[test]
-        #N_size = N_sizes[test]
-
-        XT = load_synt_gauss(n=n, d=d, cl=cl, std=std, cl_d=dims_pr_cl, re=0)
-        # X = load_synt(n=n, d=d, cl=cl, cl_d=dims_pr_cl, re=0)
-        n = XT.shape[0]
-
-        if 1 == 2:
-            t0 = time.time()
-            rs = GPU_INSCY_memory(XT, N_size, F, num_obj, min_size, r, number_of_cells=c, rectangular=True)
-            print("GPU_INSCY_memory, took: %.4fs" % (time.time() - t0))
-
-        print("X STATS:", X.min(), X.max(), X.mean(), X.std(), X.dtype, X.shape)
-        print("XT STATs:", XT.min(), XT.max(), XT.mean(), XT.std(), XT.dtype, XT.shape)
-
-        print(XT.shape, N_size, F, num_obj, min_size, r, c)
-        print(type(XT), type(N_size), type(F), type(num_obj), type(min_size), type(r), type(c))
-
-        #quit(3)
-        print(XT.shape, XT)
-        #print(X.shape, X)
-
     try:
-        print(X.dtype)
-        X = X[0:8000,0:15]
-        print(X.shape, X.dtype)
-        
         result = inscy_fn(X, args.neighborhood_size, args.F, args.num_obj, min_size, args.r,
                          number_of_cells=args.number_of_cells, rectangular=args.rectangular)
         print(f"[GPU_INSCY] Completed successfully!")
