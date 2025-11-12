@@ -130,6 +130,8 @@ def run_example():
     # Run clustering
     import subprocess
     result = subprocess.run(cmd, capture_output=False)
+
+    print(result)
     
     if result.returncode == 0:
         print("\n" + "=" * 70)
