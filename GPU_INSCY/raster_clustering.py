@@ -322,6 +322,33 @@ def main():
         X = X.float()
         print(f"[Warning] Converted tensor to float32")
     
+    # Check dataset size against GPU_INSCY's tested limits
+    N, B = X.shape
+    MAX_SAMPLES_TESTED = 10000  # Largest tested: pendigits ~7.5K, test.py 8K
+    MAX_DIMS_TESTED = 20  # Largest tested: pendigits 17, test.py 15
+    
+    if N > MAX_SAMPLES_TESTED or B > MAX_DIMS_TESTED:
+        print(f"\n[WARNING] ================================================")
+        print(f"[WARNING] Dataset size ({N:,} × {B}) exceeds GPU_INSCY tested limits!")
+        print(f"[WARNING] Tested max: {MAX_SAMPLES_TESTED:,} samples × {MAX_DIMS_TESTED} dimensions")
+        print(f"[WARNING] Your data is {N/MAX_SAMPLES_TESTED:.1f}x larger in samples")
+        print(f"[WARNING] Your data is {B/MAX_DIMS_TESTED:.1f}x larger in dimensions")
+        print(f"[WARNING] ================================================")
+        print(f"[WARNING] GPU_INSCY may crash or produce incorrect results!")
+        print(f"[WARNING] Recommendations:")
+        print(f"[WARNING]   1. Downsample spatially: X[::stride] to reduce samples")
+        print(f"[WARNING]   2. Select top bands: X[:, band_indices] to reduce dimensions")
+        print(f"[WARNING]   3. Process in spatial chunks/tiles")
+        print(f"[WARNING] ================================================\n")
+        
+        # Don't automatically downsample - let user make the decision
+        # But provide clear guidance
+        if N > MAX_SAMPLES_TESTED * 100:  # More than 100x tested size
+            print(f"[ERROR] Dataset is {N/MAX_SAMPLES_TESTED:.0f}x too large!")
+            print(f"[ERROR] GPU_INSCY will almost certainly crash. Stopping.")
+            print(f"[ERROR] Please downsample your data before running.")
+            raise ValueError(f"Dataset size ({N:,} × {B}) far exceeds GPU_INSCY capacity")
+    
     print(f"[GPU_INSCY] {args.variant}: neighborhood_size={args.neighborhood_size}, F={args.F}, "
           f"num_obj={args.num_obj}, min_size={min_size}, r={args.r}, "
           f"number_of_cells={args.number_of_cells}, rectangular={args.rectangular}")

@@ -151,6 +151,66 @@ python raster_clustering.py \
 - `--artifacts_dir`: Save JSON artifacts with detailed results
 - `--save_band_list`: Save list of discovered bands to text file
 
+## Dataset Size Limitations
+
+**⚠️ CRITICAL**: GPU_INSCY has been tested with datasets up to **~10,000 samples × 20 dimensions**.
+
+### Tested Dataset Sizes
+
+| Dataset | Samples | Dimensions | Status |
+|---------|---------|------------|--------|
+| vowel | 989 | 10 | ✅ Works |
+| glass | 214 | 11 | ✅ Works |
+| pendigits | 7,494 | 17 | ✅ Works |
+| test.py synthetic | 8,000 | 15 | ✅ Works |
+| **Large raster data** | **1M+** | **50+** | ⚠️ **May crash** |
+
+### If Your Dataset is Too Large
+
+**Symptoms**: Instant segmentation fault, CUDA errors, no output
+
+**Solutions**:
+
+1. **Spatial Downsampling**
+   ```bash
+   # Example: downsample to 10% of pixels
+   python raster_clustering.py ... --downsample 10
+   ```
+   Or manually subsample your raster before processing
+
+2. **Band Selection**
+   ```bash
+   # Select only 15-20 most informative bands
+   # Use PCA, variance analysis, or domain knowledge
+   ```
+
+3. **Tile-Based Processing**
+   ```bash
+   # Process spatial tiles separately
+   # Merge results with post-processing
+   ```
+
+4. **Memory-Efficient Variant**
+   ```bash
+   # Use GPU_INSCY_memory (most memory-efficient)
+   --variant GPU_INSCY_memory
+   ```
+
+### Safe Guidelines
+
+- **Samples**: Keep under 50,000 for reliability, under 10,000 for tested stability
+- **Dimensions**: Keep under 30 dimensions, ideally 15-20
+- **Memory**: Monitor GPU memory usage (<2GB recommended)
+
+### Error Message
+
+If the script detects an oversized dataset, you'll see:
+```
+[WARNING] Dataset size (6,480,000 × 84) exceeds GPU_INSCY tested limits!
+[WARNING] Tested max: 10,000 samples × 20 dimensions
+[ERROR] Please downsample your data before running.
+```
+
 ## Input Data Format
 
 ### Requirements
